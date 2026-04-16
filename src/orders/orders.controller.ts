@@ -34,7 +34,6 @@ export class OrdersController {
   changeOrderStatus(
     @Payload() changeOrderStatusDto: ChangeOrderStatusDto
   ) {
-
     return this.ordersService.changeOrderStatus(changeOrderStatusDto);
   }
 }
