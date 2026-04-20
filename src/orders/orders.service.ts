@@ -5,20 +5,20 @@ import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { OrderPaginationDto } from './dto/order-pagination.dto';
 import { ChangeOrderStatusDto } from './dto';
 import { firstValueFrom } from 'rxjs';
-import { PRODUCTS_SERVICE } from 'src/config';
+import { NATS_SERVICE } from 'src/config';
 
 @Injectable()
 export class OrdersService {
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(PRODUCTS_SERVICE) private readonly productsClient: ClientProxy
+    @Inject(NATS_SERVICE) private readonly client: ClientProxy
   ) { }
 
   async create(createOrderDto: CreateOrderDto) {
     try {
       const productIds = createOrderDto.items.map(item => item.productId);
       const products: any[] = await firstValueFrom(
-        this.productsClient.send(
+        this.client.send(
           { cmd: 'validate_products' },
           productIds
         )
@@ -115,7 +115,7 @@ export class OrdersService {
 
     const productIds = order?.OrderItem.map(item => item.productId);
     const products: any[] = await firstValueFrom(
-      this.productsClient.send(
+      this.client.send(
         { cmd: 'validate_products' },
         productIds
       )
