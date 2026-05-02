@@ -3,12 +3,15 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { ClientProxy, RpcException } from '@nestjs/microservices';
 import { OrderPaginationDto } from './dto/order-pagination.dto';
-import { ChangeOrderStatusDto } from './dto';
+import { ChangeOrderStatusDto, PaidOrderDto } from './dto';
 import { firstValueFrom } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
+import { OrderWithProductsDto } from './dto/interfaces/order-with-products.dto';
+import { OrderStatus } from 'generated/prisma/enums';
 
 @Injectable()
 export class OrdersService {
+  private readonly logger = new Logger(OrdersService.name);
   constructor(
     private readonly prisma: PrismaService,
     @Inject(NATS_SERVICE) private readonly client: ClientProxy
@@ -127,7 +130,7 @@ export class OrdersService {
       });
     }
 
-    
+
     return {
       ...order,
       OrderItem: order.OrderItem.map((orderItem) => ({
@@ -147,5 +150,50 @@ export class OrdersService {
       where: { id },
       data: { status }
     });
+  }
+
+  async createPaymentSession(order: OrderWithProductsDto) {
+    try {
+      const paymentSession = await firstValueFrom(
+        this.client.send(
+          'create.payment.session',
+          {
+            orderId: order.id,
+            currency: 'usd',
+            items: order.OrderItem.map(item => ({
+              name: item.name,
+              price: item.price,
+              quantity: item.quantity,
+            }))
+          }
+        )
+      )
+      return paymentSession;
+    } catch (error: any) {
+      return `Error: ${error.message}`;
+    }
+  }
+
+  async paidOrder(paidOrderDto: PaidOrderDto) {
+
+    this.logger.log({ paidOrderDto });
+
+    const updatedOrder = await this.prisma.order.update({
+      where: { id: paidOrderDto.orderId },
+      data: {
+        paid: true,
+        paidAt: new Date(),
+        status: OrderStatus.PAID,
+        stripeChargeId: paidOrderDto.stripePaymentId,
+
+        // relación
+        orderReceipt: {
+          create: {
+            receiptUrl: paidOrderDto.receiptUrl
+          }
+        }
+      }
+    });
+    return { ...updatedOrder };
   }
 }
