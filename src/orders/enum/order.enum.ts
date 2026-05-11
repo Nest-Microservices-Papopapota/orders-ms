@@ -1,4 +1,4 @@
-import { OrderStatus } from "generated/prisma/enums";
+import { OrderStatus } from "@prisma/client";
 
 export const orderStatusList = [
     OrderStatus.PENDING,

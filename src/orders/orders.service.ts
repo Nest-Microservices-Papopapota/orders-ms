@@ -7,7 +7,7 @@ import { ChangeOrderStatusDto, PaidOrderDto } from './dto';
 import { firstValueFrom } from 'rxjs';
 import { NATS_SERVICE } from 'src/config';
 import { OrderWithProductsDto } from './dto/interfaces/order-with-products.dto';
-import { OrderStatus } from 'generated/prisma/enums';
+import { OrderStatus } from '@prisma/client';
 
 @Injectable()
 export class OrdersService {

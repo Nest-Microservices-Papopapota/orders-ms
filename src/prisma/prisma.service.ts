@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit, Post } from '@nestjs/common';
-import { PrismaClient } from '../../generated/prisma/client.js';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
     private readonly logger = new Logger('OrdersService');
